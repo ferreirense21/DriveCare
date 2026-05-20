@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Dashboard</title>
+    <style>
+        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .topbar { width: 100%; background-color: #1a1a1a; padding: 20px 0; border-bottom: 1px solid #3498db; text-align: center; box-sizing: border-box; position: relative; }
+        .topbar h1 { margin: 0; font-size: 24px; letter-spacing: 2px; color: #fff; }
+        .container { width: 100%; max-width: 1000px; padding: 40px 20px; box-sizing: border-box; text-align: center; }
+        p.boas-vindas { color: #888; font-size: 18px; margin-bottom: 40px; }
+        
+        /* Grid adaptativo para 4 colunas */
+        .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+        .card-menu { background-color: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 35px 20px; text-decoration: none; color: white; transition: all 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .card-menu:hover { border-color: #3498db; transform: translateY(-5px); background-color: #252525; box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2); }
+        .card-menu i { font-size: 45px; margin-bottom: 15px; }
+        .card-menu h3 { margin: 0; font-size: 16px; color: #3498db; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .btn-sair { display: inline-block; margin-top: 50px; color: #e74c3c; text-decoration: none; font-weight: bold; border: 1px solid #e74c3c; padding: 10px 25px; border-radius: 5px; transition: 0.3s; background: transparent; cursor: pointer; }
+        .btn-sair:hover { background-color: #e74c3c; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <h1>DRIVECARE</h1>
+    </div>
+
+    <div class="container">
+        <p class="boas-vindas">Bem-vindo ao seu painel de controle automotivo.</p>
+
+        <div class="menu-grid">
+            <a href="garagem.html" class="card-menu">
+                <i>🚘</i>
+                <h3>Minha Garagem</h3>
+            </a>
+            <a href="cadastrar-carro.html" class="card-menu">
+                <i>➕</i>
+                <h3>Cadastrar Veículo</h3>
+            </a>
+            <a href="monitoramento.html" class="card-menu">
+                <i>📊</i>
+                <h3>Telemetria</h3>
+            </a>
+            <a href="manutencao.html" class="card-menu">
+                <i>🔧</i>
+                <h3>Manutenção</h3>
+            </a>
+            <a href="notificacoes.html" class="card-menu">
+                <i>🔔</i>
+                <h3>Notificações</h3>
+            </a>
+            <a href="fipe.html" class="card-menu">
+                <i>💵</i>
+                <h3>Tabela FIPE</h3>
+            </a>
+            <a href="perfil.html" class="card-menu">
+                <i>👤</i>
+                <h3>Meu Perfil</h3>
+            </a>
+        </div>
+
+        <button class="btn-sair" onclick="fazerLogout()">Sair do Sistema</button>
+    </div>
+
+    <script>
+        function fazerLogout() {
+            localStorage.removeItem('usuarioId');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

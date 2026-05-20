@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Cadastrar Veículo</title>
+    <style>
+        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background-color: #1e1e1e; padding: 40px; border-radius: 10px; border: 1px solid #333; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #3498db; margin-bottom: 30px; margin-top: 0; }
+        label { font-weight: bold; color: #888; display: block; margin-top: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+        input { width: 100%; padding: 12px; margin-top: 8px; background-color: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; font-size: 16px; outline: none; transition: border-color 0.3s; }
+        input:focus { border-color: #3498db; }
+        button { width: 100%; padding: 14px; background: #3498db; color: white; border: none; border-radius: 5px; font-weight: bold; margin-top: 30px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+        button:hover { background: #2980b9; }
+        .back-link { text-align: center; display: block; margin-top: 25px; color: #888; text-decoration: none; font-size: 14px; transition: color 0.3s; }
+        .back-link:hover { color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Cadastrar Carro</h2>
+        <form id="form-veiculo">
+            <label>Marca</label>
+            <input type="text" id="marca" required placeholder="Ex: Citroen">
+
+            <label>Modelo</label>
+            <input type="text" id="modelo" required placeholder="Ex: C3">
+
+            <label>Placa</label>
+            <input type="text" id="placa" required placeholder="Ex: ABC1D23">
+
+            <button type="submit">SALVAR VEÍCULO</button>
+        </form>
+        <a href="dashboard.html" class="back-link">← Cancelar e Voltar</a>
+    </div>
+
+    <script>
+        document.getElementById('form-veiculo').addEventListener('submit', async function(event) {
+            event.preventDefault(); 
+
+            const idUsuarioLogado = localStorage.getItem('usuarioId');
+            if (!idUsuarioLogado) {
+                alert("Você precisa estar logado para cadastrar um carro!");
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const dadosVeiculo = {
+                marca: document.getElementById('marca').value,
+                modelo: document.getElementById('modelo').value,
+                placa: document.getElementById('placa').value,
+                usuario: { id_usuario: parseInt(idUsuarioLogado) }
+            };
+
+            try {
+                const response = await fetch('/veiculos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosVeiculo)
+                });
+
+                if (response.ok) {
+                    window.location.href = 'garagem.html'; 
+                } else {
+                    alert("Erro ao salvar veículo no banco de dados.");
+                }
+            } catch (error) {
+                alert("Erro de conexão. O servidor Java está rodando?");
+            }
+        });
+    </script>
+</body>
+</html>

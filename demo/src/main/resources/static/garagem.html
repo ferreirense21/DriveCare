@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Garagem</title>
+    <style>
+        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        .topbar { background-color: #1a1a1a; padding: 15px 20px; border-bottom: 1px solid #3498db; display: flex; justify-content: space-between; align-items: center; }
+        .topbar a { color: #ffffff; text-decoration: none; font-weight: bold; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        h2 { text-align: center; margin-bottom: 30px; }
+        
+        .lista-carros { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .carro-card { background-color: #1e1e1e; border: 1px solid #333; border-radius: 10px; padding: 20px; text-align: center; }
+        .carro-card h3 { color: #3498db; margin-top: 0; font-size: 22px; text-transform: uppercase; }
+        .carro-placa { background-color: #2a2a2a; display: inline-block; padding: 5px 15px; border-radius: 4px; font-family: monospace; font-size: 18px; color: #aaa; margin-top: 10px; border: 1px solid #444; }
+        
+        .vazio { text-align: center; color: #888; font-size: 18px; grid-column: 1 / -1; padding: 40px; background: #1a1a1a; border-radius: 10px;}
+        .btn-novo { display: block; width: 200px; margin: 40px auto; background-color: #3498db; color: white; text-align: center; padding: 12px; text-decoration: none; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .btn-novo:hover { background-color: #2980b9; }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="dashboard.html">← Voltar ao Painel</a>
+        <span>Minha Garagem</span>
+    </div>
+
+    <div class="container">
+        <h2>Meus Veículos</h2>
+
+        <div class="lista-carros" id="lista-carros">
+            <div class="vazio">Buscando veículos no banco de dados...</div>
+        </div>
+
+        <a href="cadastrar-carro.html" class="btn-novo">+ Adicionar Novo Carro</a>
+    </div>
+
+    <script>
+        window.onload = async function() {
+            const idUsuarioLogado = localStorage.getItem('usuarioId');
+            if (!idUsuarioLogado) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/veiculos/usuario/${idUsuarioLogado}`);
+                const veiculos = await response.json();
+                const divLista = document.getElementById('lista-carros');
+                
+                divLista.innerHTML = '';
+
+                if (veiculos.length === 0) {
+                    divLista.innerHTML = '<div class="vazio">Sua garagem está vazia. Adicione um carro para começar!</div>';
+                    return;
+                }
+
+                veiculos.forEach(v => {
+                    divLista.innerHTML += `
+                        <div class="carro-card">
+                            <h3>${v.marca} ${v.modelo}</h3>
+                            <div class="carro-placa">${v.placa.toUpperCase()}</div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                document.getElementById('lista-carros').innerHTML = '<div class="vazio">Erro ao conectar com o servidor.</div>';
+            }
+        };
+    </script>
+</body>
+</html>
