@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Planos e Assinaturas</title>
+    <style>
+        body { 
+            background-color: #0b0f19;
+            color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; min-height: 100vh;
+        }
+        .topbar { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); padding: 15px 20px; border-bottom: 1px solid #38bdf8; display: flex; justify-content: space-between; }
+        .topbar a { color: #ffffff; text-decoration: none; font-weight: bold; }
+
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; text-align: center; }
+        h2 { color: #38bdf8; font-size: 32px; margin-bottom: 10px; }
+        p.sub { color: #94a3b8; margin-bottom: 40px; font-size: 16px; }
+
+        .planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+        .plano-card { 
+            background: rgba(30, 41, 59, 0.7); border: 1px solid #334155; 
+            border-radius: 16px; padding: 30px; transition: 0.3s; position: relative;
+        }
+        .plano-card:hover { transform: translateY(-5px); border-color: #38bdf8; }
+        .plano-card.destaque { border: 2px solid #10b981; background: rgba(16, 185, 129, 0.1); }
+        
+        .plano-nome { font-size: 22px; font-weight: bold; margin-bottom: 15px; }
+        .plano-preco { font-size: 36px; color: #38bdf8; font-weight: bold; margin-bottom: 20px; }
+        .plano-preco span { font-size: 14px; color: #94a3b8; font-weight: normal; }
+        
+        .lista-recursos { list-style: none; padding: 0; margin: 0 0 30px 0; text-align: left; }
+        .lista-recursos li { margin-bottom: 12px; color: #cbd5e1; font-size: 14px; }
+        .lista-recursos li::before { content: '✔️'; margin-right: 8px; color: #10b981; }
+
+        .btn-assinar { 
+            width: 100%; background: #38bdf8; color: #0b0f19; border: none; padding: 15px; 
+            border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s;
+        }
+        .btn-assinar:hover { filter: brightness(1.1); }
+        .btn-assinar:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="dashboard.html">← Voltar ao Painel</a>
+        <span style="color: #38bdf8; font-weight: bold;">Planos DriveCare</span>
+    </div>
+
+    <div class="container">
+        <h2>Escolha seu Plano</h2>
+        <p class="sub">Integração oficial com o Checkout Pro do Mercado Pago.</p>
+
+        <div class="planos-grid">
+            <div class="plano-card">
+                <div class="plano-nome">DriveCare Start</div>
+                <div class="plano-preco">R$ 49,90<span>/mês</span></div>
+                <ul class="lista-recursos"><li>1 Veículo</li><li>Alertas Básicos</li></ul>
+                <button class="btn-assinar" onclick="assinarPlanoReal('DriveCare Start', '49.90')">Assinar Start</button>
+            </div>
+
+            <div class="plano-card destaque">
+                <div class="plano-nome">DriveCare Premium</div>
+                <div class="plano-preco">R$ 89,90<span>/mês</span></div>
+                <ul class="lista-recursos"><li>Até 3 Veículos</li><li>Suporte 24/7</li></ul>
+                <button class="btn-assinar" style="background: #10b981; color: white;" onclick="assinarPlanoReal('DriveCare Premium', '89.90')">Assinar Premium</button>
+            </div>
+
+            <div class="plano-card">
+                <div class="plano-nome">DriveCare Frota</div>
+                <div class="plano-preco">R$ 199,90<span>/mês</span></div>
+                <ul class="lista-recursos"><li>Veículos Ilimitados</li><li>Acesso à API</li></ul>
+                <button class="btn-assinar" onclick="assinarPlanoReal('DriveCare Frota', '199.90')">Assinar Frota</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function assinarPlanoReal(nomePlano, precoPlano) {
+            const btnClicado = event.target;
+            const textoOriginal = btnClicado.innerText;
+            
+            btnClicado.innerText = "Aguarde...";
+            btnClicado.disabled = true;
+
+            const payload = {
+                plano: nomePlano,
+                preco: precoPlano
+            };
+
+            fetch('/planos/criar-pagamento-real', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.checkoutUrl) {
+                    // O link foi gerado com sucesso! Abre a tela do Mercado Pago.
+                    window.location.href = data.checkoutUrl;
+                } else {
+                    alert(data.erro);
+                    btnClicado.innerText = textoOriginal;
+                    btnClicado.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert("Erro de conexão. Tente novamente.");
+                btnClicado.innerText = textoOriginal;
+                btnClicado.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

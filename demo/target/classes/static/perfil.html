@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Perfil</title>
+    <style>
+        body { 
+            background-image: url('https://images.unsplash.com/photo-1551522435-a13afa10f103?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: #ffffff; font-family: 'Segoe UI', sans-serif; min-height: 100vh; margin: 0; padding: 20px;
+        }
+
+        .container { max-width: 900px; margin: 40px auto; display: grid; grid-template-columns: 300px 1fr; gap: 25px; }
+
+        .card { 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(15px);
+            padding: 30px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .avatar { width: 120px; height: 120px; background: #38bdf8; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 50px; color: #000; font-weight: bold; }
+        
+        .campo { margin-bottom: 20px; }
+        .label { color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; }
+        
+        /* O segredo: INPUTS desabilitados ficam com cara de texto, mas prontos para editar */
+        input { 
+            width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid #1e293b; 
+            color: #f1f5f9; border-radius: 8px; font-size: 16px; box-sizing: border-box;
+        }
+        input:disabled { border-color: transparent; background: transparent; padding-left: 0; }
+        input:focus { border-color: #38bdf8; outline: none; background: rgba(0,0,0,0.5); }
+
+        .btn-edit { background: #38bdf8; color: #000; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-save { background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="card" style="text-align: center;">
+            <div class="avatar" id="avatar-letra">I</div>
+            <h3 id="nome-sidebar">Isabella Nogueira</h3>
+            <span style="background: #10b981; padding: 5px 15px; border-radius: 20px; font-size: 12px;">Assinante Premium</span>
+        </div>
+
+        <div class="card">
+            <h2>Informações Pessoais</h2>
+            <form id="form-perfil">
+                <div class="campo">
+                    <div class="label">NOME COMPLETO</div>
+                    <input type="text" id="in-nome" value="Isabella Nogueira" disabled>
+                </div>
+                <div class="campo">
+                    <div class="label">E-MAIL PROFISSIONAL</div>
+                    <input type="email" id="in-email" value="isabella@gmail.com" disabled>
+                </div>
+                <div class="campo">
+                    <div class="label">DOCUMENTO (CPF/CNPJ)</div>
+                    <input type="text" id="in-doc" value="456.789.123-45" disabled>
+                </div>
+                <div class="campo">
+                    <div class="label">TELEFONE DE CONTATO</div>
+                    <input type="text" id="in-tel" value="(61) 99988-7766" disabled>
+                </div>
+
+                <button type="button" class="btn-edit" id="btn-edit" onclick="habilitarEdicao()">EDITAR DADOS</button>
+                <button type="button" class="btn-save" id="btn-save" onclick="salvarDados()">SALVAR ALTERAÇÕES</button>
+                <a href="dashboard.html" style="color: #64748b; margin-left: 15px; text-decoration: none;">Voltar ao Painel</a>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Carrega dados salvos
+        window.onload = () => {
+            document.getElementById('in-nome').value = localStorage.getItem('p-nome') || "Isabella Nogueira";
+            document.getElementById('in-email').value = localStorage.getItem('p-email') || "isabella@gmail.com";
+            document.getElementById('nome-sidebar').innerText = document.getElementById('in-nome').value;
+            document.getElementById('avatar-letra').innerText = document.getElementById('in-nome').value.charAt(0);
+        };
+
+        function habilitarEdicao() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(i => i.disabled = false);
+            document.getElementById('btn-edit').style.display = 'none';
+            document.getElementById('btn-save').style.display = 'inline-block';
+        }
+
+        function salvarDados() {
+            localStorage.setItem('p-nome', document.getElementById('in-nome').value);
+            localStorage.setItem('p-email', document.getElementById('in-email').value);
+            
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(i => i.disabled = true);
+            document.getElementById('btn-edit').style.display = 'inline-block';
+            document.getElementById('btn-save').style.display = 'none';
+            
+            document.getElementById('nome-sidebar').innerText = document.getElementById('in-nome').value;
+            alert("Dados atualizados com sucesso!");
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Tabela FIPE</title>
+    <style>
+        body { 
+            background-image: url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: #ffffff; font-family: 'Segoe UI', sans-serif; min-height: 100vh; margin: 0; padding: 20px;
+        }
+
+        .card { 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(15px);
+            padding: 40px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1); 
+            max-width: 500px; margin: 50px auto; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+
+        h2 { text-align: center; color: #38bdf8; margin-bottom: 30px; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+        label { font-weight: bold; color: #94a3b8; display: block; margin-top: 15px; font-size: 12px; letter-spacing: 1px; }
+        
+        select { 
+            width: 100%; padding: 14px; margin-top: 8px; background: rgba(0,0,0,0.5); 
+            border: 1px solid #334155; color: white; border-radius: 8px; font-size: 15px;
+        }
+
+        button { 
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); 
+            color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 30px; cursor: pointer; transition: 0.3s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3); }
+
+        /* Resultado da FIPE */
+        #resultado { display: none; margin-top: 30px; background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; border: 1px solid #10b981; text-align: center; }
+        .valor-fipe { font-size: 32px; font-weight: bold; color: #10b981; display: block; margin-top: 10px; }
+        .back-link { text-align: center; display: block; margin-top: 25px; color: #94a3b8; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Consulta Tabela FIPE</h2>
+        <form id="fipe-form">
+            <label>Marca</label>
+            <select id="marca" onchange="carregarModelos()"></select>
+            
+            <label>Modelo</label>
+            <select id="modelo" onchange="carregarAnos()" disabled></select>
+            
+            <label>Ano/Versão</label>
+            <select id="ano" disabled></select>
+            
+            <button type="button" onclick="buscarPreco()">CONSULTAR VALOR</button>
+        </form>
+
+        <div id="resultado">
+            <span style="font-size: 14px;">Valor de Mercado Atual:</span>
+            <span class="valor-fipe" id="valor-preco">R$ 0,00</span>
+        </div>
+        <a href="dashboard.html" class="back-link">← Voltar ao Dashboard</a>
+    </div>
+
+    <script>
+        const urlBase = 'https://parallelum.com.br/fipe/api/v1/carros';
+
+        async function carregarMarcas() {
+            const res = await fetch(`${urlBase}/marcas`);
+            const data = await res.json();
+            const sel = document.getElementById('marca');
+            data.forEach(m => sel.innerHTML += `<option value="${m.codigo}">${m.nome}</option>`);
+        }
+
+        async function carregarModelos() {
+            const id = document.getElementById('marca').value;
+            const res = await fetch(`${urlBase}/marcas/${id}/modelos`);
+            const data = await res.json();
+            const sel = document.getElementById('modelo');
+            sel.innerHTML = '<option>Selecione o Modelo</option>';
+            data.modelos.forEach(m => sel.innerHTML += `<option value="${m.codigo}">${m.nome}</option>`);
+            sel.disabled = false;
+        }
+
+        async function carregarAnos() {
+            const mId = document.getElementById('marca').value;
+            const modId = document.getElementById('modelo').value;
+            const res = await fetch(`${urlBase}/marcas/${mId}/modelos/${modId}/anos`);
+            const data = await res.json();
+            const sel = document.getElementById('ano');
+            sel.innerHTML = '<option>Selecione o Ano</option>';
+            data.forEach(a => sel.innerHTML += `<option value="${a.codigo}">${a.nome}</option>`);
+            sel.disabled = false;
+        }
+
+        async function buscarPreco() {
+            const mId = document.getElementById('marca').value;
+            const modId = document.getElementById('modelo').value;
+            const aId = document.getElementById('ano').value;
+            const res = await fetch(`${urlBase}/marcas/${mId}/modelos/${modId}/anos/${aId}`);
+            const data = await res.json();
+            document.getElementById('valor-preco').innerText = data.Valor;
+            document.getElementById('resultado').style.display = 'block';
+        }
+
+        carregarMarcas();
+    </script>
+</body>
+</html>

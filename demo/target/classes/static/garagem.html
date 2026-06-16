@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Minha Frota</title>
+    <style>
+        body { background-color: #0b0f19; color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; min-height: 100vh; }
+        .topbar { background-color: rgba(11, 15, 25, 0.9); backdrop-filter: blur(10px); padding: 15px 20px; border-bottom: 1px solid rgba(52, 152, 219, 0.2); display: flex; justify-content: space-between; align-items: center; }
+        .topbar a { color: #ffffff; text-decoration: none; font-weight: bold; transition: 0.3s; }
+        .topbar a:hover { color: #3498db; }
+        
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        h2 { text-align: center; margin-bottom: 40px; font-size: 28px; letter-spacing: 1px; color: #f8fafc; }
+        
+        .lista-carros { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+        
+        .carro-card { 
+            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155; border-radius: 16px; overflow: hidden; 
+            transition: all 0.3s ease; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            display: flex; flex-direction: column;
+        }
+        .carro-card:hover { transform: translateY(-5px); border-color: #38bdf8; box-shadow: 0 15px 35px rgba(56, 189, 248, 0.15); }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0, 0, 0, 0.2); border-bottom: 1px solid #1e293b; }
+        .status-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #94a3b8; font-weight: 600; letter-spacing: 1px; }
+        .dot { width: 8px; height: 8px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+        /* Novo botão de deletar */
+        .btn-excluir { background: none; border: none; color: #64748b; font-size: 16px; cursor: pointer; transition: 0.3s; padding: 0; }
+        .btn-excluir:hover { color: #ef4444; transform: scale(1.2); }
+
+        .card-body { padding: 30px 20px; text-align: center; flex-grow: 1; }
+        .icon-vehicle { width: 80px; height: 80px; stroke: #38bdf8; margin-bottom: 15px; opacity: 0.9; }
+        .card-body h3 { color: #f1f5f9; margin: 0 0 15px 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px;}
+        .carro-placa { background: #0b0f19; display: inline-block; padding: 8px 24px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 18px; color: #38bdf8; border: 1px solid #1e293b; letter-spacing: 4px; font-weight: bold; }
+
+        .card-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; background: rgba(0, 0, 0, 0.3); border-top: 1px solid #1e293b; padding: 15px 10px; }
+        .stat-box { text-align: center; border-right: 1px solid #1e293b; }
+        .stat-box:last-child { border-right: none; }
+        .stat-label { display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .stat-value { font-size: 14px; font-weight: bold; color: #f1f5f9; }
+
+        .color-green { color: #10b981; }
+        .color-blue { color: #38bdf8; }
+        .color-yellow { color: #f59e0b; }
+        .color-red { color: #ef4444; }
+        
+        .vazio { text-align: center; color: #888; font-size: 18px; grid-column: 1 / -1; padding: 50px; background: rgba(30, 30, 30, 0.4); border-radius: 12px; border: 1px dashed #334155;}
+        .btn-novo { display: block; width: 250px; margin: 50px auto; background: #38bdf8; color: #0b0f19; text-align: center; padding: 15px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; font-size: 16px; }
+        .btn-novo:hover { background: #0ea5e9; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(56, 189, 248, 0.3);}
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <a href="dashboard.html">← Voltar ao Painel</a>
+        <span>Módulo de Telemetria</span>
+    </div>
+
+    <div class="container">
+        <h2>Painel de Monitoramento</h2>
+        <div class="lista-carros" id="lista-carros">
+            <div class="vazio">Sincronizando com a base de dados...</div>
+        </div>
+        <a href="cadastrar-carro.html" class="btn-novo">+ Registrar Novo Veículo</a>
+    </div>
+
+    <script>
+        // Função para deletar o carro chamando a nova rota do Java
+        async function deletarCarro(id_veiculo) {
+            if (confirm("Tem certeza que deseja remover este veículo do sistema?")) {
+                try {
+                    const response = await fetch(`/veiculos/${id_veiculo}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        window.location.reload(); // Recarrega a página para atualizar a lista
+                    } else {
+                        alert("Erro ao excluir. O veículo não foi encontrado.");
+                    }
+                } catch (error) {
+                    alert("Erro de conexão com o servidor.");
+                }
+            }
+        }
+
+        window.onload = async function() {
+            const idUsuarioLogado = localStorage.getItem('usuarioId');
+            if (!idUsuarioLogado) { window.location.href = 'login.html'; return; }
+
+            try {
+                const response = await fetch(`/veiculos/usuario/${idUsuarioLogado}`);
+                const veiculos = await response.json();
+                const divLista = document.getElementById('lista-carros');
+                divLista.innerHTML = '';
+
+                if (veiculos.length === 0) {
+                    divLista.innerHTML = '<div class="vazio">Nenhum veículo pareado. Registre um carro para iniciar a telemetria.</div>';
+                    return;
+                }
+
+                // Dicionário de variações realistas para a telemetria
+                const tensoes = ["12.4V", "12.8V", "13.1V", "14.2V", "11.9V", "12.6V"];
+                const motores = ["OK", "OK", "OK", "SERV", "CHECK"];
+
+                veiculos.forEach(v => {
+                    // Sorteia os valores dinâmicos para cada card ficar diferente
+                    const batSorteada = tensoes[Math.floor(Math.random() * tensoes.length)];
+                    const motSorteado = motores[Math.floor(Math.random() * motores.length)];
+                    const sinalSorteado = Math.floor(Math.random() * (100 - 80 + 1)) + 80; // Gera entre 80 e 100
+                    
+                    // Ajusta a cor do texto dependendo do status do motor e bateria
+                    let corMot = motSorteado === "OK" ? "color-blue" : (motSorteado === "SERV" ? "color-yellow" : "color-red");
+                    let corBat = batSorteada === "11.9V" ? "color-yellow" : "color-green";
+
+                    divLista.innerHTML += `
+                        <div class="carro-card">
+                            <div class="card-header">
+                                <div class="status-badge"><span class="dot"></span> Online</div>
+                                <button class="btn-excluir" onclick="deletarCarro(${v.id_veiculo})" title="Remover Veículo">✖</button>
+                            </div>
+                            
+                            <div class="card-body">
+                                <svg class="icon-vehicle" viewBox="0 0 24 24" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 16H9m10 0h3v-3.15a1 1 0 00-.84-.99L16 11l-2.7-3.6a2 2 0 00-1.6-.8H9.3a2 2 0 00-1.6.8L5 11l-5.16.86a1 1 0 00-.84.99V16h3m10 0a2 2 0 10-4 0 2 2 0 004 0zM7 16a2 2 0 10-4 0 2 2 0 004 0z"/>
+                                </svg>
+                                <h3>${v.marca} ${v.modelo}</h3>
+                                <div class="carro-placa">${v.placa.toUpperCase()}</div>
+                            </div>
+
+                            <div class="card-footer">
+                                <div class="stat-box">
+                                    <span class="stat-label">Bateria</span>
+                                    <span class="stat-value ${corBat}">${batSorteada}</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Motor</span>
+                                    <span class="stat-value ${corMot}">${motSorteado}</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-label">Sinal</span>
+                                    <span class="stat-value">${sinalSorteado}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                document.getElementById('lista-carros').innerHTML = '<div class="vazio">Erro de conexão.</div>';
+            }
+        };
+    </script>
+</body>
+</html>

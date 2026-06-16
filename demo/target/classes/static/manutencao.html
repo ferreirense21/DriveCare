@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Plano de Manutenção</title>
+    <style>
+        body { 
+            background-image: url('https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; min-height: 100vh;
+        }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(0, 0, 0, 0.85) 100%); z-index: -1;
+        }
+
+        .topbar { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); padding: 15px 20px; border-bottom: 1px solid rgba(56, 189, 248, 0.2); display: flex; justify-content: space-between; align-items: center; }
+        .topbar a { color: #94a3b8; text-decoration: none; font-weight: bold; transition: 0.3s; font-size: 14px;}
+        .topbar a:hover { color: #38bdf8; }
+
+        .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        
+        .control-panel {
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(15px); border: 1px solid #334155;
+            border-radius: 12px; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .selector-group { display: flex; align-items: center; gap: 15px; width: 60%; }
+        select { 
+            width: 100%; padding: 14px; background: rgba(0,0,0,0.6); border: 1px solid #38bdf8; 
+            color: white; border-radius: 8px; font-size: 16px; outline: none; cursor: pointer;
+        }
+        select option { background: #0f172a; }
+
+        .placa-badge { background: #000; padding: 10px 20px; border-radius: 6px; font-family: monospace; font-size: 20px; color: #38bdf8; border: 2px solid #1e293b; letter-spacing: 3px; font-weight: bold; }
+
+        .mock-alert { background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 10px; text-align: center; font-size: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.5); display: none;}
+
+        /* Grid Principal de Manutenção */
+        .manutencao-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; display: none; }
+
+        .panel-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .panel-card h3 { margin: 0 0 20px 0; font-size: 16px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;}
+
+        /* Barras de Saúde (Health Bars) */
+        .health-item { margin-bottom: 20px; }
+        .health-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #cbd5e1; font-weight: bold; }
+        .health-bar-bg { width: 100%; height: 10px; background: #1e293b; border-radius: 5px; overflow: hidden; border: 1px solid #334155;}
+        .health-bar-fill { height: 100%; border-radius: 5px; transition: width 1s ease-in-out; }
+        
+        .bg-green { background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+        .bg-yellow { background: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+        .bg-red { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+
+        /* Alertas de Manutenção */
+        .alert-box { background: rgba(245, 158, 11, 0.1); border-left: 4px solid #f59e0b; padding: 15px; border-radius: 0 8px 8px 0; margin-bottom: 15px; }
+        .alert-box.critical { background: rgba(239, 68, 68, 0.1); border-left-color: #ef4444; }
+        .alert-title { font-weight: bold; color: #f8fafc; font-size: 15px; margin-bottom: 5px; }
+        .alert-desc { color: #94a3b8; font-size: 13px; }
+
+        /* Linha do Tempo (Histórico) */
+        .timeline { list-style: none; padding: 0; margin: 0; }
+        .timeline li { position: relative; padding-left: 20px; margin-bottom: 20px; border-left: 2px solid #334155; }
+        .timeline li::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; background: #38bdf8; border-radius: 50%; box-shadow: 0 0 8px #38bdf8; }
+        .time-date { font-size: 11px; color: #64748b; font-weight: bold; letter-spacing: 1px; }
+        .time-title { font-size: 15px; color: #f1f5f9; margin: 5px 0; }
+        .time-km { font-size: 13px; color: #10b981; font-family: monospace; }
+        
+        @media (max-width: 768px) {
+            .manutencao-grid { grid-template-columns: 1fr; }
+            .selector-group { width: 100%; margin-bottom: 15px; }
+            .control-panel { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="topbar">
+        <a href="dashboard.html">← Voltar ao Dashboard</a>
+        <span style="color: #38bdf8; font-weight: bold; letter-spacing: 1px;">GESTÃO DE MANUTENÇÃO</span>
+    </div>
+
+    <div class="container">
+        
+        <div class="mock-alert" id="mock-alert">
+            ⚠️ Modo Offline: Carregando frota de demonstração para análise de manutenção.
+        </div>
+
+        <div class="control-panel">
+            <div class="selector-group">
+                <select id="select-carro" onchange="carregarManutencao()">
+                    <option value="">Aguarde, conectando ao servidor...</option>
+                </select>
+            </div>
+            <div class="placa-badge" id="display-placa">------</div>
+        </div>
+
+        <div class="manutencao-grid" id="painel-manutencao">
+            
+            <div class="panel-card">
+                <h3>📊 Saúde dos Componentes</h3>
+                
+                <div class="health-item">
+                    <div class="health-header"><span>Óleo do Motor</span><span id="pct-oleo">0%</span></div>
+                    <div class="health-bar-bg"><div class="health-bar-fill" id="bar-oleo" style="width: 0%;"></div></div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-header"><span>Pastilhas de Freio</span><span id="pct-freio">0%</span></div>
+                    <div class="health-bar-bg"><div class="health-bar-fill" id="bar-freio" style="width: 0%;"></div></div>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-header"><span>Pneus</span><span id="pct-pneu">0%</span></div>
+                    <div class="health-bar-bg"><div class="health-bar-fill" id="bar-pneu" style="width: 0%;"></div></div>
+                </div>
+                
+                <div class="health-item">
+                    <div class="health-header"><span>Bateria</span><span id="pct-bat">0%</span></div>
+                    <div class="health-bar-bg"><div class="health-bar-fill" id="bar-bat" style="width: 0%;"></div></div>
+                </div>
+
+                <h3 style="margin-top: 40px;">⚠️ Próximas Revisões</h3>
+                <div id="box-alertas">
+                    </div>
+            </div>
+
+            <div class="panel-card">
+                <h3>📋 Histórico de Serviços</h3>
+                <ul class="timeline" id="box-historico">
+                    </ul>
+                <button style="width: 100%; padding: 12px; background: transparent; border: 1px solid #38bdf8; color: #38bdf8; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s;" onmouseover="this.style.background='#38bdf8'; this.style.color='#000';" onmouseout="this.style.background='transparent'; this.style.color='#38bdf8';">+ Adicionar Serviço Realizado</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let frotaUsuario = [];
+
+        window.onload = async function() {
+            const idUsuarioLogado = localStorage.getItem('usuarioId') || "1"; 
+            const select = document.getElementById('select-carro');
+
+            try {
+                const response = await fetch(`/veiculos/usuario/${idUsuarioLogado}`);
+                if (!response.ok) throw new Error("Erro na API");
+                frotaUsuario = await response.json();
+                
+                if (frotaUsuario.length === 0) throw new Error("Garagem Vazia");
+                
+            } catch (error) {
+                document.getElementById('mock-alert').style.display = 'block';
+                frotaUsuario = [
+                    { marca: "HONDA", modelo: "CIVIC G10", placa: "NBM0155" },
+                    { marca: "BYD", modelo: "SONG PLUS", placa: "PFL8I11" },
+                    { marca: "TOYOTA", modelo: "COROLLA 2.0 XEI", placa: "PBO7U09" }
+                ];
+            }
+
+            select.innerHTML = '<option value="">Selecione o veículo para diagnosticar...</option>';
+            frotaUsuario.forEach((v, index) => {
+                const option = document.createElement('option');
+                option.value = index; 
+                option.text = `${v.marca} ${v.modelo} - Placa: ${v.placa.toUpperCase()}`;
+                select.appendChild(option);
+            });
+        };
+
+        function carregarManutencao() {
+            const select = document.getElementById('select-carro');
+            const index = select.value;
+            const painel = document.getElementById('painel-manutencao');
+            const placaBadge = document.getElementById('display-placa');
+
+            if (index === "") {
+                painel.style.display = 'none';
+                placaBadge.innerText = '------';
+                return;
+            }
+
+            const veiculo = frotaUsuario[index];
+            placaBadge.innerText = veiculo.placa.toUpperCase();
+            painel.style.display = 'grid';
+
+            // Gerar status aleatórios para as barras de saúde
+            atualizarBarra('oleo', Math.floor(Math.random() * 80) + 10);
+            atualizarBarra('freio', Math.floor(Math.random() * 60) + 40);
+            atualizarBarra('pneu', Math.floor(Math.random() * 70) + 30);
+            atualizarBarra('bat', Math.floor(Math.random() * 50) + 50);
+
+            gerarAlertasEHistorico();
+        }
+
+        function atualizarBarra(id, porcentagem) {
+            const bar = document.getElementById(`bar-${id}`);
+            const text = document.getElementById(`pct-${id}`);
+            
+            // Remove as cores antigas
+            bar.classList.remove('bg-green', 'bg-yellow', 'bg-red');
+            
+            // Aplica a nova cor baseada na porcentagem
+            if (porcentagem > 60) bar.classList.add('bg-green');
+            else if (porcentagem > 25) bar.classList.add('bg-yellow');
+            else bar.classList.add('bg-red');
+
+            // Aplica o tamanho com delay pra dar efeito de animação
+            setTimeout(() => {
+                bar.style.width = `${porcentagem}%`;
+                text.innerText = `${porcentagem}%`;
+            }, 100);
+        }
+
+        function gerarAlertasEHistorico() {
+            // Sorteia se o carro precisa de óleo ou alinhamento
+            const alertasHTML = `
+                <div class="alert-box ${Math.random() > 0.5 ? 'critical' : ''}">
+                    <div class="alert-title">🔧 Troca de Óleo e Filtros</div>
+                    <div class="alert-desc">Estimada para daqui a ${Math.floor(Math.random() * 3000) + 500} km ou 2 meses.</div>
+                </div>
+                <div class="alert-box">
+                    <div class="alert-title">🛞 Alinhamento e Balanceamento</div>
+                    <div class="alert-desc">Recomendado a cada 10.000 km. Verifique o desgaste.</div>
+                </div>
+            `;
+            document.getElementById('box-alertas').innerHTML = alertasHTML;
+
+            // Histórico falso mas realista
+            const datas = ["12/04/2026", "05/11/2025", "22/05/2025"];
+            const kmAtual = Math.floor(Math.random() * 50000) + 10000;
+            
+            const historicoHTML = `
+                <li>
+                    <div class="time-date">${datas[0]}</div>
+                    <div class="time-title">Revisão Completa e Troca de Óleo</div>
+                    <div class="time-km">KM: ${(kmAtual - 2000).toLocaleString('pt-BR')}</div>
+                </li>
+                <li>
+                    <div class="time-date">${datas[1]}</div>
+                    <div class="time-title">Troca do Fluido de Freio</div>
+                    <div class="time-km">KM: ${(kmAtual - 12000).toLocaleString('pt-BR')}</div>
+                </li>
+                <li>
+                    <div class="time-date">${datas[2]}</div>
+                    <div class="time-title">Substituição das Pastilhas Dianteiras</div>
+                    <div class="time-km">KM: ${(kmAtual - 25000).toLocaleString('pt-BR')}</div>
+                </li>
+            `;
+            document.getElementById('box-historico').innerHTML = historicoHTML;
+        }
+    </script>
+</body>
+</html>

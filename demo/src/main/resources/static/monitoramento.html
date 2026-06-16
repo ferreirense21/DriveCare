@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DriveCare - Telemetria Ao Vivo</title>
+    <style>
+        body { 
+            background-image: url('https://images.unsplash.com/photo-1551522435-a13afa10f103?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 0; min-height: 100vh;
+        }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(0, 0, 0, 0.8) 100%); z-index: -1;
+        }
+
+        .topbar { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(15px); padding: 15px 20px; border-bottom: 1px solid rgba(56, 189, 248, 0.2); display: flex; justify-content: space-between; align-items: center; }
+        .topbar a { color: #94a3b8; text-decoration: none; font-weight: bold; transition: 0.3s; font-size: 14px;}
+        .topbar a:hover { color: #38bdf8; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        
+        .control-panel {
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(15px); border: 1px solid #334155;
+            border-radius: 12px; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .selector-group { display: flex; align-items: center; gap: 15px; width: 60%; }
+        select { 
+            width: 100%; padding: 14px; background: rgba(0,0,0,0.6); border: 1px solid #38bdf8; 
+            color: white; border-radius: 8px; font-size: 16px; outline: none; cursor: pointer;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        select option { background: #0f172a; }
+
+        .placa-badge { background: #000; padding: 10px 20px; border-radius: 6px; font-family: monospace; font-size: 20px; color: #38bdf8; border: 2px solid #1e293b; letter-spacing: 3px; font-weight: bold; }
+
+        .telemetry-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; display: none; }
+
+        .panel-card { background: rgba(30, 41, 59, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .panel-card h3 { margin: 0 0 20px 0; font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #334155; padding-bottom: 10px; display: flex; justify-content: space-between;}
+
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .data-label { color: #cbd5e1; font-size: 14px; }
+        .data-value { font-size: 22px; font-weight: bold; color: #f8fafc; font-family: monospace; }
+        .data-value.highlight { color: #38bdf8; }
+        .data-value.warning { color: #f59e0b; }
+        .data-value.good { color: #10b981; }
+
+        .tires-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; }
+        .tire { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid #334155; }
+        .tire-label { font-size: 11px; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+        .tire-val { font-size: 18px; font-weight: bold; color: #10b981; }
+
+        .terminal { background: #000; border-radius: 8px; padding: 15px; font-family: monospace; font-size: 12px; color: #10b981; height: 120px; overflow-y: hidden; position: relative; border: 1px solid #334155; margin-top: 20px; }
+        .terminal-line { margin: 2px 0; opacity: 0.8; }
+
+        .connection-status { text-align: center; font-size: 12px; font-weight: bold; color: #10b981; margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .dot { width: 10px; height: 10px; background-color: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        
+        .mock-alert { background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 10px; text-align: center; font-size: 12px; margin-bottom: 15px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.5); display: none;}
+    </style>
+</head>
+<body>
+
+    <div class="overlay"></div>
+
+    <div class="topbar">
+        <a href="dashboard.html">← Voltar ao Dashboard</a>
+        <span style="color: #38bdf8; font-weight: bold; letter-spacing: 1px;">DIAGNÓSTICO EM TEMPO REAL</span>
+    </div>
+
+    <div class="container">
+        
+        <div class="mock-alert" id="mock-alert">
+            ⚠️ O servidor Java não respondeu. Carregando frota de demonstração para a apresentação.
+        </div>
+
+        <div class="control-panel">
+            <div class="selector-group">
+                <select id="select-carro" onchange="iniciarTelemetria()">
+                    <option value="">Aguarde, conectando ao servidor...</option>
+                </select>
+            </div>
+            <div class="placa-badge" id="display-placa">------</div>
+        </div>
+
+        <div class="telemetry-grid" id="painel-telemetria">
+            
+            <div class="panel-card">
+                <h3>⚙️ Motor & Transmissão <span class="dot"></span></h3>
+                <div class="data-row"><span class="data-label">Status do Motor</span><span class="data-value good">EM FUNCIONAMENTO</span></div>
+                <div class="data-row"><span class="data-label">Rotação (RPM)</span><span class="data-value highlight" id="rpm-val">850</span></div>
+                <div class="data-row"><span class="data-label">Velocidade Atual</span><span class="data-value">0 km/h</span></div>
+                <div class="data-row"><span class="data-label">Temp. do Fluido</span><span class="data-value warning" id="temp-val">92°C</span></div>
+            </div>
+
+            <div class="panel-card">
+                <h3>⚡ Sistemas Vitais</h3>
+                <div class="data-row"><span class="data-label">Tensão da Bateria</span><span class="data-value highlight" id="bat-val">14.2V</span></div>
+                <div class="data-row"><span class="data-label">Nível Combustível</span><span class="data-value" id="comb-val">68%</span></div>
+                <div class="data-row"><span class="data-label">Autonomia Estimada</span><span class="data-value" id="autonomia-val">412 km</span></div>
+                <div class="data-row"><span class="data-label">Vida Útil Óleo</span><span class="data-value good" id="oleo-val">88%</span></div>
+            </div>
+
+            <div class="panel-card">
+                <h3>🛞 Pressão Pneus (PSI)</h3>
+                <div class="tires-container">
+                    <div class="tire"><div class="tire-label">Diant. Esq.</div><div class="tire-val" id="pe">32</div></div>
+                    <div class="tire"><div class="tire-label">Diant. Dir.</div><div class="tire-val" id="pd">32</div></div>
+                    <div class="tire"><div class="tire-label">Tras. Esq.</div><div class="tire-val" id="te">31</div></div>
+                    <div class="tire"><div class="tire-label">Tras. Dir.</div><div class="tire-val" id="td">31</div></div>
+                </div>
+            </div>
+
+            <div class="panel-card" style="grid-column: 1 / -1;">
+                <h3>📡 Stream de Dados OBD-II (Raw Data)</h3>
+                <div class="terminal" id="terminal-obd">
+                    <div class="terminal-line">Iniciando handshake com módulo OBD-II...</div>
+                </div>
+                <div class="connection-status">
+                    <span class="dot"></span> CONEXÃO ESTABELECIDA - RECEBENDO PACOTES
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let frotaUsuario = [];
+        let simulacaoInterval;
+
+        window.onload = async function() {
+            const idUsuarioLogado = localStorage.getItem('usuarioId') || "1"; // Força um ID se der erro
+            const select = document.getElementById('select-carro');
+
+            try {
+                // TENTA buscar do seu banco de dados
+                const response = await fetch(`/veiculos/usuario/${idUsuarioLogado}`);
+                if (!response.ok) throw new Error("Erro na API");
+                frotaUsuario = await response.json();
+                
+                if (frotaUsuario.length === 0) throw new Error("Garagem Vazia");
+                
+            } catch (error) {
+                // PLANO B: Se o Java falhar, injeta carros de demonstração para a tela não travar!
+                console.warn("Entrando em modo Fail-Safe. Carregando dados falsos.");
+                document.getElementById('mock-alert').style.display = 'block';
+                
+                frotaUsuario = [
+                    { marca: "HONDA", modelo: "CIVIC G10", placa: "NBM0155" },
+                    { marca: "BYD", modelo: "SONG PLUS", placa: "PFL8I11" },
+                    { marca: "TOYOTA", modelo: "COROLLA 2.0 XEI", placa: "PBO7U09" }
+                ];
+            }
+
+            // Popula a caixinha com os carros (reais ou de demonstração)
+            select.innerHTML = '<option value="">Selecione um veículo da sua frota...</option>';
+            frotaUsuario.forEach((v, index) => {
+                const option = document.createElement('option');
+                option.value = index; 
+                option.text = `${v.marca} ${v.modelo} - Placa: ${v.placa.toUpperCase()}`;
+                select.appendChild(option);
+            });
+        };
+
+        function iniciarTelemetria() {
+            const select = document.getElementById('select-carro');
+            const index = select.value;
+            const painel = document.getElementById('painel-telemetria');
+            const placaBadge = document.getElementById('display-placa');
+
+            if (index === "") {
+                painel.style.display = 'none';
+                placaBadge.innerText = '------';
+                clearInterval(simulacaoInterval);
+                return;
+            }
+
+            const veiculo = frotaUsuario[index];
+            placaBadge.innerText = veiculo.placa.toUpperCase();
+            painel.style.display = 'grid';
+
+            // Gerar dados básicos aleatórios por carro para parecer real
+            document.getElementById('comb-val').innerText = (Math.floor(Math.random() * 50) + 30) + '%';
+            document.getElementById('autonomia-val').innerText = (Math.floor(Math.random() * 300) + 100) + ' km';
+            document.getElementById('oleo-val').innerText = (Math.floor(Math.random() * 40) + 60) + '%';
+
+            clearInterval(simulacaoInterval);
+            simularDados();
+            simularTerminal();
+        }
+
+        function simularDados() {
+            simulacaoInterval = setInterval(() => {
+                let rpmBase = 850;
+                let variacao = Math.floor(Math.random() * 40) - 20;
+                document.getElementById('rpm-val').innerText = rpmBase + variacao;
+
+                let batBase = 14.1;
+                let varBat = (Math.random() * 0.2).toFixed(1);
+                document.getElementById('bat-val').innerText = (batBase + parseFloat(varBat)).toFixed(1) + 'V';
+
+                let tempBase = 90;
+                let varTemp = Math.floor(Math.random() * 4) - 2;
+                document.getElementById('temp-val').innerText = (tempBase + varTemp) + '°C';
+            }, 1000);
+        }
+
+        function simularTerminal() {
+            const terminal = document.getElementById('terminal-obd');
+            terminal.innerHTML = ''; 
+
+            setInterval(() => {
+                let hex1 = Math.floor(Math.random()*16777215).toString(16).toUpperCase().padStart(6, '0');
+                let hex2 = Math.floor(Math.random()*16777215).toString(16).toUpperCase().padStart(6, '0');
+                
+                const linha = document.createElement('div');
+                linha.className = 'terminal-line';
+                linha.innerText = `[${new Date().toISOString().split('T')[1].slice(0,-1)}] RX: 7DF 02 01 05 00 00 -> DATA: ${hex1} ${hex2} OK`;
+                
+                terminal.appendChild(linha);
+
+                if (terminal.children.length > 5) {
+                    terminal.removeChild(terminal.firstChild);
+                }
+            }, 800);
+        }
+    </script>
+</body>
+</html>
